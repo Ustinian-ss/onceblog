@@ -2,7 +2,7 @@
   <div class="site-hero">
     <div class="site-hero__overlay"></div>
     <div class="site-hero__content">
-      <p class="site-hero__eyebrow">Jingtaiblog</p>
+      <p class="site-hero__eyebrow"><%= config.title %></p>
       <h1 class="site-hero__title"><a href="<%- url_for() %>"><%= config.title %></a></h1>
       <% if (theme.subtitle || config.subtitle){ %>
         <p class="site-hero__subtitle"><%= theme.subtitle || config.subtitle %></p>

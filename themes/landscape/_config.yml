@@ -41,7 +41,7 @@ copyright:
 # Sidebar
 # ===============
 # Sidebar style. You can choose `left`, `right`, `bottom` or `false`.
-sidebar: right
+sidebar: false
 # Widgets displaying in sidebar
 widgets:
 - category
