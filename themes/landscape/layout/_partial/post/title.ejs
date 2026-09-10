@@ -4,9 +4,10 @@
   </h1>
 <% } else if (post.title){ %>
   <% if (index){ %>
-    <h1 itemprop="name">
+    <%# 列表页用 h2，保证整页只有一个 h1（hero 标题） %>
+    <h2 itemprop="name">
       <a class="<%= class_name %>" href="<%- url_for(post.path) %>"><%= post.title %></a>
-    </h1>
+    </h2>
   <% } else { %>
     <h1 class="<%= class_name %>" itemprop="headline name">
       <%= post.title %>

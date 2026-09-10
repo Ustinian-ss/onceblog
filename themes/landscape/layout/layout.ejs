@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="<%= config.language %>">
 <%- partial('_partial/head') %>
 <body>
-  <canvas id="starfield"></canvas>
+  <canvas id="starfield" aria-hidden="true"></canvas>
   <%- partial('_partial/loading') %>
   <div id="container">
     <div id="wrap">

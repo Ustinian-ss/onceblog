@@ -34,5 +34,11 @@
   </div>
   <% if (!index){ %>
     <%- partial('post/nav') %>
+    <% if (theme.valine && theme.valine.enable){ %>
+      <%# Valine 挂载点（开启评论后生效） %>
+      <section id="comments" class="comments-wrap article-card">
+        <div class="vcomment"></div>
+      </section>
+    <% } %>
   <% } %>
 </article>

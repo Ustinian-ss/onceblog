@@ -819,6 +819,14 @@ body
   50%
     transform: translateY(8px)
 
+// 减少动态效果偏好：停用装饰性动画
+@media (prefers-reduced-motion: reduce)
+  .scroll-down
+    animation: none
+  #loading-box .configure-border-1
+  #loading-box .configure-border-2
+    animation: none
+
 // ============================================================
 // Rightside panel
 // ============================================================

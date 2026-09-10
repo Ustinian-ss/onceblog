@@ -10,7 +10,7 @@ rss: /atom.xml
 # Path of title banner image of page top
 banner: "images/banner.jpg"
 # Subtitle of page top
-subtitle: Notes &amp; Writeups
+subtitle: Notes & Writeups
 # Header links with icon, specified links will appear at the top right corner of the page
 # Each name must correspond to the icon name of Fork Awesome
 # https://forkaweso.me/Fork-Awesome/icons/

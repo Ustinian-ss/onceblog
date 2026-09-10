@@ -1,4 +1,4 @@
-﻿<% if (theme.disqus_shortname){ %>
+<% if (theme.disqus_shortname){ %>
 <script>
   var disqus_shortname = '<%= theme.disqus_shortname %>';
   <% if (page.permalink){ %>
@@ -54,14 +54,14 @@
   })()
 </script>
 <div id="search-mask"></div>
-<div id="search-dialog">
+<div id="search-dialog" role="dialog" aria-modal="true" aria-label="搜索文章">
   <div class="search-dialog-inner">
     <div class="search-header">
-      <span class="search-title"><i class="fas fa-search"></i> 搜索文章</span>
-      <button class="search-close"><i class="fas fa-times"></i></button>
+      <span class="search-title"><i class="fas fa-search" aria-hidden="true"></i> 搜索文章</span>
+      <button class="search-close" aria-label="关闭搜索"><i class="fas fa-times" aria-hidden="true"></i></button>
     </div>
     <div class="search-input-wrap">
-      <input type="text" class="search-input" placeholder="输入关键词搜索...">
+      <input type="text" class="search-input" placeholder="输入关键词搜索..." aria-label="搜索关键词">
     </div>
     <div class="search-results"></div>
     <div class="search-empty">未找到相关内容</div>
@@ -104,6 +104,12 @@
       results.innerHTML='';
       empty.style.display='none'
     }
+    function esc(s){
+      // 标题/内容含 < & 等字符时避免破坏 HTML 结构（XSS 防护）
+      return String(s).replace(/[&<>"']/g,function(c){
+        return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]
+      })
+    }
     function doSearch(q){
       if(!searchData||!q.trim()){results.innerHTML='';empty.style.display='none';return}
       var kw=q.trim().toLowerCase();
@@ -113,7 +119,7 @@
       if(hits.length===0){results.innerHTML='';empty.style.display='block';return}
       empty.style.display='none';
       results.innerHTML=hits.map(function(item){
-        return '<a class=\"search-result-item\" href=\"'+item.url+'\"><strong>'+item.title+'</strong><p>'+item.content.substring(0,120)+'...</p></a>'
+        return '<a class=\"search-result-item\" href=\"'+esc(item.url)+'\"><strong>'+esc(item.title)+'</strong><p>'+esc(item.content.substring(0,120))+'...</p></a>'
       }).join('')
     }
     document.querySelector('.nav-search-btn').addEventListener('click',function(e){e.preventDefault();openSearch()});
@@ -156,8 +162,9 @@
   var LINK_DIST=140,FR=0.90;
   var mouse={x:-1e9,y:-1e9};
   window.addEventListener('mousemove',function(e){
-    mouse.x = e.clientX * DPR;
-    mouse.y = e.clientY * DPR;
+    // canvas 经 setTransform 后坐标系是 CSS 像素，鼠标坐标不要乘 DPR（HiDPI 屏会偏移一倍）
+    mouse.x = e.clientX;
+    mouse.y = e.clientY;
   });
   function size(){
     W=window.innerWidth;H=window.innerHeight;
@@ -264,7 +271,20 @@
     ctx.lineWidth=1;
     requestAnimationFrame(draw);
   }
-  draw(typeof performance!=="undefined"?performance.now():Date.now());
+  // 减少动态效果偏好：静态星空，不启动动画循环
+  if(reduce){
+    // 只绘制一帧静态星点
+    (function(){
+      var pal=palette();
+      for(var i=0;i<particles.length;i++){
+        var p=particles[i],c=pal[Math.floor(Math.random()*pal.length)];
+        ctx.fillStyle=rgba(c,0.5);
+        ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();
+      }
+    })();
+  } else {
+    draw(typeof performance!=="undefined"?performance.now():Date.now());
+  }
 })();
 </script>
 <%- js('js/jquery-3.6.4.min.js') %>

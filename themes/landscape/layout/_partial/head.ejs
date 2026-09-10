@@ -1,9 +1,12 @@
 <head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="theme-color" content="#f8f7f4">
   <script>
     (function(){
-      var t=localStorage.getItem('theme');
+      // theme-color meta 必须在脚本之前，首屏暗色才能即时更新地址栏颜色
+      var t=null;
+      try{t=localStorage.getItem('theme')}catch(e){} // 隐私模式/禁 cookie 下不致中断
       var d=document.documentElement;
       if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme:dark)').matches)){
         d.setAttribute('data-theme','dark');
@@ -13,8 +16,19 @@
       }
     })()
   </script>
-  <meta name="theme-color" content="#f8f7f4">
-  <meta name="description" content="<%= config.description %>">
+  <%
+  // 每页独立 description：文章页优先用摘要/正文开头，其余页面用全站描述
+  var page_desc = config.description;
+  if (page.description){
+    page_desc = page.description;
+  } else if (page.excerpt){
+    page_desc = strip_html(page.excerpt).replace(/s+/g, ' ').trim();
+  } else if (page.content){
+    page_desc = strip_html(page.content).replace(/s+/g, ' ').trim();
+  }
+  if (page_desc && page_desc.length > 160){ page_desc = page_desc.substring(0, 157) + '...'; }
+  %>
+  <meta name="description" content="<%= page_desc %>">
   <%- partial('google-analytics') %>
   <%
   var title = page.title;

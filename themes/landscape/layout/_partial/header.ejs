@@ -8,9 +8,9 @@
         <p class="site-hero__subtitle"><%= theme.subtitle || config.subtitle %></p>
       <% } %>
       <nav id="main-nav" class="site-nav">
-        <a id="main-nav-toggle" class="nav-icon"><i class="fas fa-bars"></i></a>
-        <a class="main-nav-link nav-search-btn" href="javascript:void(0)" title="搜索">
-          <i class="fas fa-search"></i>
+        <a id="main-nav-toggle" class="nav-icon" href="#" role="button" aria-label="打开导航菜单"><i class="fas fa-bars" aria-hidden="true"></i></a>
+        <a class="main-nav-link nav-search-btn" href="#" role="button" title="搜索" aria-label="搜索">
+          <i class="fas fa-search" aria-hidden="true"></i>
         </a>
         <% for (var i in theme.menu){ %>
           <a class="main-nav-link" href="<%- url_for(theme.menu[i]) %>"><%= i %></a>

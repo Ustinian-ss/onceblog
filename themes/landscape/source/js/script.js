@@ -69,17 +69,18 @@
       $('body').append(box);
     }
 
-    $('.article-share-box.on').hide();
+    $('.article-share-box.on').removeClass('on');
 
+    // .show() 清除历史 hide() 留下的 inline display:none，否则弹窗第二次打不开
     box.css({
       top: offset.top + 25,
       left: offset.left
-    }).addClass('on');
+    }).show().addClass('on');
   }).on('click', '.article-share-box', function(e){
     e.stopPropagation();
-  }).on('click', '.article-share-box-input', function(){
+  }).on('click', '.article-share-input', function(){
     $(this).select();
-  }).on('click', '.article-share-box-link', function(e){
+  }).on('click', '.article-share-links a', function(e){
     e.preventDefault();
     e.stopPropagation();
 

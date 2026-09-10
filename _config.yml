@@ -4,7 +4,7 @@
 
 # Site
 title: onceblog
-subtitle: Notes &amp; Writeups
+subtitle: Notes & Writeups
 description: onceblog — personal notes, technical writeups, and curated recommendations.
 keywords: blog,notes,tech,writeups
 author: Ustinian-ss
@@ -111,3 +111,17 @@ search:
   field: post
   content: true
   format: html
+
+# RSS 订阅（此前主题引用 /atom.xml 但未装生成插件，链接 404）
+feed:
+  enable: true
+  type: atom
+  path: atom.xml
+  limit: 20
+  content: true
+  content_limit: 140
+  content_limit_delim: ' '
+
+# 站点地图（SEO）
+sitemap:
+  path: sitemap.xml
