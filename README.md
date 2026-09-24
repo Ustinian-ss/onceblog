@@ -2,7 +2,7 @@
 
 基于 Hexo 8 + 深度定制 Landscape 主题的个人静态博客，部署在 Vercel。
 
-- 线上地址：https://onceblog.vercel.app
+- 线上地址：https://jingtaiblog.vercel.app
 - 主题：`themes/landscape`（就地修改版，升级主题会覆盖本地改动——改样式请直接改这个目录）
 - 生成内容：RSS（`/atom.xml`）、站点地图（`/sitemap.xml`）、本地搜索（`/search.xml`）
 

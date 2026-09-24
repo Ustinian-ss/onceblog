@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://onceblog.vercel.app/sitemap.xml
+Sitemap: https://jingtaiblog.vercel.app/sitemap.xml
