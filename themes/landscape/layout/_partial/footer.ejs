@@ -10,6 +10,11 @@
       <div class="footer-links">
         <a href="/"><i class="fas fa-home"></i> 首页</a>
         <a href="/archives"><i class="fas fa-archive"></i> 归档</a>
+        <a href="/tags"><i class="fas fa-tags"></i> 标签</a>
+        <a href="/categories"><i class="fas fa-folder-open"></i> 分类</a>
+        <% if (theme.rss){ %>
+          <a href="<%- url_for(theme.rss) %>" target="_blank" rel="noopener"><i class="fas fa-rss"></i> RSS</a>
+        <% } %>
         <% if (theme.links) { %>
           <% for (const i in theme.links) {%>
             <a href="<%- url_for(theme.links[i]) %>" target="_blank" rel="noopener"><i class="fab fa-<%= i %>"></i> <%= i.charAt(0).toUpperCase()+i.slice(1) %></a>

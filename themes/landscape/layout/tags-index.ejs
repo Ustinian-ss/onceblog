@@ -1,0 +1,13 @@
+<div class="taxonomy-page card-panel">
+  <p class="section-kicker">Tags</p>
+  <h1 class="page-title"><%= page.title %></h1>
+  <p class="page-subtitle">共 <%= site.tags.length %> 个标签，点击查看对应文章</p>
+  <div class="tag-cloud-full">
+    <% site.tags.sort('name').each(function(tag){ %>
+      <a class="tag-chip" href="<%- url_for(tag.path) %>">
+        <span class="tag-name"><%= tag.name %></span>
+        <span class="tag-count"><%= tag.length %></span>
+      </a>
+    <% }) %>
+  </div>
+</div>

@@ -1,4 +1,13 @@
 <% if (expand){ %>
+  <%
+  // 站点统计（一次性计算）
+  var postsArray = site.posts.sort('date', -1).toArray();
+  var totalWords = 0;
+  postsArray.forEach(function(p){ totalWords += (p.content ? strip_html(p.content).replace(/\s+/g, '') : '').length; });
+  var firstDate = postsArray.length ? postsArray[postsArray.length - 1].date : null;
+  var runDays = firstDate ? Math.max(1, Math.floor((Date.now() - firstDate.valueOf()) / 86400000)) : 0;
+  var lastPost = postsArray.length ? postsArray[0] : null;
+  %>
   <section class="home-shell">
     <div class="home-main">
       <div class="home-intro card-panel">
@@ -31,26 +40,53 @@
       </div>
 
       <div class="card-panel side-card">
-        <p class="section-kicker">About</p>
-        <p>Static blog powered by Hexo. More posts, docs, and project notes will be added here.</p>
+        <p class="section-kicker">站点资讯</p>
+        <ul class="site-info-list">
+          <li><span class="site-info-label"><i class="fas fa-file-alt" aria-hidden="true"></i> 文章</span><strong><%= site.posts.length %></strong></li>
+          <li><span class="site-info-label"><i class="fas fa-folder-open" aria-hidden="true"></i> 分类</span><strong><%= site.categories.length %></strong></li>
+          <li><span class="site-info-label"><i class="fas fa-tags" aria-hidden="true"></i> 标签</span><strong><%= site.tags.length %></strong></li>
+          <li><span class="site-info-label"><i class="fas fa-pen-nib" aria-hidden="true"></i> 总字数</span><strong><%= totalWords.toLocaleString() %></strong></li>
+          <li><span class="site-info-label"><i class="fas fa-clock" aria-hidden="true"></i> 已运行</span><strong><%= runDays %> 天</strong></li>
+          <li><span class="site-info-label"><i class="fas fa-sync-alt" aria-hidden="true"></i> 最后更新</span><strong><%= lastPost ? date(lastPost.date, 'YYYY-MM-DD') : '-' %></strong></li>
+        </ul>
       </div>
 
       <div class="card-panel side-card">
-        <p class="section-kicker">Archive</p>
-        <ul class="compact-list">
-          <% site.posts.sort('date', -1).limit(10).each(function(post){ %>
-            <li><a href="<%- url_for(post.path) %>"><%= post.title %></a></li>
+        <p class="section-kicker">最新文章</p>
+        <ul class="compact-list latest-list">
+          <% postsArray.slice(0, 8).forEach(function(post){ %>
+            <li>
+              <a href="<%- url_for(post.path) %>">
+                <span class="latest-title"><%= post.title %></span>
+                <span class="latest-date"><%= date(post.date, 'MM-DD') %></span>
+              </a>
+            </li>
           <% }) %>
         </ul>
       </div>
 
       <div class="card-panel side-card">
-        <p class="section-kicker">Quick Links</p>
+        <p class="section-kicker">标签云</p>
         <div class="tag-cloud-lite">
-          <a href="<%- url_for('archives') %>">Archives</a>
-          <a href="<%- url_for('categories') %>">Categories</a>
-          <a href="<%- url_for('tags') %>">Tags</a>
+          <% site.tags.sort('name').limit(24).each(function(tag){ %>
+            <a href="<%- url_for(tag.path) %>"><%= tag.name %></a>
+          <% }) %>
+          <a href="<%- url_for('tags') %>" class="tag-cloud-more">更多 →</a>
         </div>
+      </div>
+
+      <div class="card-panel side-card">
+        <p class="section-kicker">分类</p>
+        <ul class="compact-list">
+          <% site.categories.sort('name').each(function(category){ %>
+            <li>
+              <a href="<%- url_for(category.path) %>">
+                <span class="category-list-name"><i class="fas fa-folder-open" aria-hidden="true"></i> <%= category.name %></span>
+                <span class="category-list-count"><%= category.length %></span>
+              </a>
+            </li>
+          <% }) %>
+        </ul>
       </div>
     </aside>
   </section>

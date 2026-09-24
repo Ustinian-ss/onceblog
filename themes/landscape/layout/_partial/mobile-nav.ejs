@@ -2,9 +2,13 @@
   <div class="mobile-nav-header">
     <span class="mobile-nav-title"><%= config.title %></span>
   </div>
-  <% for (var i in theme.menu){ %>
+  <%
+  var iconMap = {Home: 'home', Archives: 'archive', Tags: 'tags', Categories: 'folder-open'};
+  for (var i in theme.menu){
+    var icon = iconMap[i] || 'circle';
+  %>
     <a href="<%- url_for(theme.menu[i]) %>" class="mobile-nav-link">
-      <i class="fas fa-<%= i === 'Home' ? 'home' : i === 'Archives' ? 'archive' : 'circle' %>"></i>
+      <i class="fas fa-<%= icon %>" aria-hidden="true"></i>
       <span><%= i %></span>
     </a>
   <% } %>

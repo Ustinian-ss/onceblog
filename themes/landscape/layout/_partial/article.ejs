@@ -1,3 +1,20 @@
+<%
+// 统计信息：字数（按字符计，适合中文）与预估阅读时长
+var words = 0;
+var mins = 0;
+if (post.content){
+  words = strip_html(post.content).replace(/\s+/g, '').length;
+  mins = Math.max(1, Math.round(words / 400));
+}
+%>
+<% if (!index){ %>
+<div class="post-shell">
+  <div class="post-main">
+    <details class="toc-mobile" open>
+      <summary><i class="fas fa-list-ul" aria-hidden="true"></i> 目录</summary>
+      <nav class="post-toc-nav toc-mobile-nav" aria-label="文章目录"><%- toc(post.content, {list_number: false}) %></nav>
+    </details>
+<% } %>
 <article id="<%= post.layout %>-<%= post.slug %>" class="h-entry article article-type-<%= post.layout %>" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
   <div class="article-inner article-card">
     <% if (post.cover){ %>
@@ -8,6 +25,13 @@
     <div class="article-meta">
       <%- partial('post/date', {class_name: 'article-date', date_format: null}) %>
       <%- partial('post/category') %>
+      <% if (!index && words > 0){ %>
+        <span class="article-meta-chip" title="预计阅读时长"><i class="far fa-clock" aria-hidden="true"></i> <%= mins %> 分钟</span>
+        <span class="article-meta-chip" title="全文字数"><i class="far fa-file-alt" aria-hidden="true"></i> <%= words %> 字</span>
+        <% if (post.updated && post.updated > post.date){ %>
+          <span class="article-meta-chip" title="最后更新"><i class="far fa-calendar-alt" aria-hidden="true"></i> 更新于 <%= date(post.updated, 'YYYY-MM-DD') %></span>
+        <% } %>
+      <% } %>
     </div>
     <%- partial('post/gallery') %>
     <% if (post.link || post.title){ %>
@@ -20,7 +44,7 @@
         <%- post.excerpt %>
         <% if (theme.excerpt_link){ %>
           <p class="article-more-link">
-            <a href="<%- url_for(post.path) %>#more"><%= theme.excerpt_link %></a>
+            <a href="<%- url_for(post.path) %>#more"><i class="fas fa-arrow-right" aria-hidden="true"></i> <%= theme.excerpt_link %></a>
           </p>
         <% } %>
       <% } else { %>
@@ -42,3 +66,30 @@
     <% } %>
   <% } %>
 </article>
+<% if (!index){ %>
+  </div>
+  <aside class="post-toc-wrap">
+    <div class="post-toc-card">
+      <div class="post-toc-header">
+        <i class="fas fa-list-ul" aria-hidden="true"></i> 文章目录
+      </div>
+      <nav class="post-toc-nav" aria-label="文章目录"><%- toc(post.content, {list_number: false}) %></nav>
+    </div>
+  </aside>
+</div>
+<% } %>
+<% if (!index && post.layout === 'post'){ %>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "<%= post.title.replace(/"/g, '\\"') %>",
+  "datePublished": "<%= date_xml(post.date) %>",
+  "dateModified": "<%= date_xml(post.updated || post.date) %>",
+  "author": { "@type": "Person", "name": "<%= config.author %>" },
+  "publisher": { "@type": "Organization", "name": "<%= config.title %>" },
+  "mainEntityOfPage": "<%= post.permalink %>",
+  "description": "<%= (post.description || strip_html(post.excerpt || post.content).replace(/\s+/g, ' ').trim().substring(0, 160)).replace(/"/g, '\\"') %>"
+}
+</script>
+<% } %>

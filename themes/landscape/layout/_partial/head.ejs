@@ -8,11 +8,22 @@
       var t=null;
       try{t=localStorage.getItem('theme')}catch(e){} // 隐私模式/禁 cookie 下不致中断
       var d=document.documentElement;
-      if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme:dark)').matches)){
-        d.setAttribute('data-theme','dark');
-        try{document.querySelector('meta[name="theme-color"]').setAttribute('content','#0b1120')}catch(e){}
-      }else{
-        try{document.querySelector('meta[name="theme-color"]').setAttribute('content','#f8f7f4')}catch(e){}
+      var apply=function(){
+        if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme:dark)').matches)){
+          d.setAttribute('data-theme','dark');
+          try{document.querySelector('meta[name="theme-color"]').setAttribute('content','#0b1120')}catch(e){}
+        }else{
+          d.setAttribute('data-theme','light');
+          try{document.querySelector('meta[name="theme-color"]').setAttribute('content','#f8f7f4')}catch(e){}
+        }
+      };
+      apply();
+      // 用户未手动选择时跟随系统主题变化
+      if(window.matchMedia){
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',function(e){
+          try{t=localStorage.getItem('theme')}catch(err){}
+          if(!t){apply()}
+        });
       }
     })()
   </script>
@@ -22,13 +33,18 @@
   if (page.description){
     page_desc = page.description;
   } else if (page.excerpt){
-    page_desc = strip_html(page.excerpt).replace(/s+/g, ' ').trim();
+    page_desc = strip_html(page.excerpt).replace(/\s+/g, ' ').trim();
   } else if (page.content){
-    page_desc = strip_html(page.content).replace(/s+/g, ' ').trim();
+    page_desc = strip_html(page.content).replace(/\s+/g, ' ').trim();
   }
   if (page_desc && page_desc.length > 160){ page_desc = page_desc.substring(0, 157) + '...'; }
+
+  // canonical：优先 front-matter 指定，其次 permalink，最后根路径拼 page.path
+  var canonical_url = page.canonical || page.permalink || (config.url + url_for(page.path));
   %>
   <meta name="description" content="<%= page_desc %>">
+  <meta name="author" content="<%= config.author %>">
+  <link rel="canonical" href="<%= canonical_url %>">
   <%- partial('google-analytics') %>
   <%
   var title = page.title;
@@ -49,7 +65,7 @@
   %>
   <title><% if (title){ %><%= title %> | <% } %><%= config.title %></title>
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <%- open_graph({twitter_id: theme.twitter, fb_admins: theme.fb_admins, fb_app_id: theme.fb_app_id}) %>
+  <%- open_graph({twitter_id: theme.twitter, fb_admins: theme.fb_admins, fb_app_id: theme.fb_app_id, image: config.url + '/css/images/banner.jpg'}) %>
   <% if (config.feed) { %>
     <%- feed_tag() %>
   <% } else if (theme.rss) { %>

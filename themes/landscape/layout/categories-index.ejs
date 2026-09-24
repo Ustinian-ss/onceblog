@@ -1,0 +1,14 @@
+<div class="taxonomy-page card-panel">
+  <p class="section-kicker">Categories</p>
+  <h1 class="page-title"><%= page.title %></h1>
+  <p class="page-subtitle">共 <%= site.categories.length %> 个分类，点击查看对应文章</p>
+  <div class="category-list-full">
+    <% site.categories.sort('name').each(function(category){ %>
+      <a class="category-chip" href="<%- url_for(category.path) %>">
+        <i class="fas fa-folder-open" aria-hidden="true"></i>
+        <span class="category-name"><%= category.name %></span>
+        <span class="category-count"><%= category.length %> 篇</span>
+      </a>
+    <% }) %>
+  </div>
+</div>

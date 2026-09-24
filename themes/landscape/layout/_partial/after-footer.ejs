@@ -14,10 +14,11 @@
 <% } %>
 <div id="rightside">
   <div id="rightside-inner">
-    <button id="darkmode-toggle" class="rightside-btn" title="切换深色/浅色模式" onclick="var h=document.documentElement;var t=h.getAttribute('data-theme')==='dark'?'light':'dark';h.setAttribute('data-theme',t);localStorage.setItem('theme',t);var m=document.querySelector('meta[name=\"theme-color\"]');if(m)m.setAttribute('content',t==='dark'?'#0b1120':'#f8f7f4')">
-      <i class="fas fa-adjust"></i>
+    <button id="darkmode-toggle" class="rightside-btn" type="button" title="切换深色/浅色模式" aria-label="切换深色/浅色模式">
+      <i class="fas fa-moon"></i>
+      <i class="fas fa-sun"></i>
     </button>
-    <button id="go-up" class="rightside-btn" title="回到顶部" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+    <button id="go-up" class="rightside-btn" type="button" title="回到顶部" aria-label="回到顶部">
       <i class="fas fa-arrow-up"></i>
     </button>
   </div>
@@ -53,96 +54,209 @@
     setTimeout(dismiss,3500);
   })()
 </script>
+
+<script>
+  // ===== 主题切换（共享给右侧按钮与吸顶栏按钮） =====
+  (function(){
+    var THEME = { light: 'light', dark: 'dark' };
+    function current(){
+      return document.documentElement.getAttribute('data-theme') === 'dark' ? THEME.dark : THEME.light;
+    }
+    function apply(theme){
+      var d = document.documentElement;
+      d.setAttribute('data-theme', theme);
+      try{ localStorage.setItem('theme', theme); }catch(e){}
+      var m = document.querySelector('meta[name="theme-color"]');
+      if (m) m.setAttribute('content', theme === 'dark' ? '#0b1120' : '#f8f7f4');
+    }
+    window.toggleTheme = function(){
+      apply(current() === 'dark' ? THEME.light : THEME.dark);
+    };
+    var rightToggle = document.getElementById('darkmode-toggle');
+    if (rightToggle) rightToggle.addEventListener('click', window.toggleTheme);
+  })();
+</script>
+
+<script>
+  // ===== 吸顶导航栏显隐 =====
+  (function(){
+    var topbar = document.getElementById('topbar');
+    if (!topbar) return;
+    var timer = null;
+    function update(){
+      var t = document.documentElement.scrollTop || document.body.scrollTop;
+      topbar.classList.toggle('visible', t > 240);
+    }
+    window.addEventListener('scroll', function(){
+      if (timer) return;
+      timer = requestAnimationFrame(function(){
+        timer = null;
+        update();
+      });
+    }, {passive: true});
+    update();
+    var themeBtn = topbar.querySelector('.topbar-theme-btn');
+    if (themeBtn) themeBtn.addEventListener('click', function(){ window.toggleTheme && window.toggleTheme(); });
+  })();
+</script>
+
 <div id="search-mask"></div>
 <div id="search-dialog" role="dialog" aria-modal="true" aria-label="搜索文章">
   <div class="search-dialog-inner">
     <div class="search-header">
       <span class="search-title"><i class="fas fa-search" aria-hidden="true"></i> 搜索文章</span>
-      <button class="search-close" aria-label="关闭搜索"><i class="fas fa-times" aria-hidden="true"></i></button>
+      <button class="search-close" type="button" aria-label="关闭搜索"><i class="fas fa-times" aria-hidden="true"></i></button>
     </div>
     <div class="search-input-wrap">
-      <input type="text" class="search-input" placeholder="输入关键词搜索..." aria-label="搜索关键词">
+      <input type="text" class="search-input" placeholder="输入关键词搜索，↑↓ 选择，Enter 打开，Esc 关闭..." aria-label="搜索关键词">
     </div>
+    <div class="search-meta"></div>
     <div class="search-results"></div>
     <div class="search-empty">未找到相关内容</div>
+  </div>
 </div>
 <script>
   (function(){
-    var searchData=null;
-    var mask=document.getElementById('search-mask');
-    var dialog=document.getElementById('search-dialog');
-    var input=dialog.querySelector('.search-input');
-    var results=dialog.querySelector('.search-results');
-    var empty=dialog.querySelector('.search-empty');
-    var closeBtn=dialog.querySelector('.search-close');
+    var searchData = null;
+    var searchUrl = '<%- url_for(config.search ? config.search.path : 'search.xml') %>';
+    var mask = document.getElementById('search-mask');
+    var dialog = document.getElementById('search-dialog');
+    var input = dialog.querySelector('.search-input');
+    var results = dialog.querySelector('.search-results');
+    var empty = dialog.querySelector('.search-empty');
+    var meta = dialog.querySelector('.search-meta');
+    var closeBtn = dialog.querySelector('.search-close');
+    var activeIndex = -1;
+    var debounceTimer = null;
+
+    function loadData(){
+      if (searchData) return Promise.resolve(searchData);
+      return fetch(searchUrl).then(function(r){ return r.text(); }).then(function(xml){
+        var parser = new DOMParser();
+        var doc = parser.parseFromString(xml, 'text/xml');
+        var entries = doc.querySelectorAll('entry');
+        searchData = [];
+        entries.forEach(function(e){
+          searchData.push({
+            title: e.querySelector('title').textContent,
+            url: e.querySelector('url').textContent,
+            content: (e.querySelector('content').textContent || '').replace(/<[^>]+>/g, '').substring(0, 300)
+          });
+        });
+        return searchData;
+      }).catch(function(){ searchData = []; return searchData; });
+    }
+
+    function esc(s){
+      return String(s).replace(/[&<>"']/g, function(c){
+        return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+      });
+    }
+    function highlight(text, kw){
+      var safe = esc(text);
+      if (!kw) return safe;
+      var idx = safe.toLowerCase().indexOf(kw);
+      if (idx === -1) return safe;
+      return safe.substring(0, idx) + '<mark>' + safe.substring(idx, idx + kw.length) + '</mark>' + safe.substring(idx + kw.length);
+    }
+
+    function render(hits, kw){
+      meta.textContent = hits.length ? '找到 ' + hits.length + ' 条结果' : '';
+      if (!hits.length){ results.innerHTML = ''; empty.style.display = 'block'; return; }
+      empty.style.display = 'none';
+      results.innerHTML = hits.map(function(item, i){
+        return '<a class="search-result-item" href="' + esc(item.url) + '" data-index="' + i + '">' +
+          '<strong>' + highlight(item.title, kw) + '</strong>' +
+          '<p>' + highlight(item.content.substring(0, 110), kw) + '</p>' +
+          '</a>';
+      }).join('');
+      activeIndex = -1;
+    }
+
+    function doSearch(q){
+      var kw = q.trim().toLowerCase();
+      if (!searchData || !kw){ results.innerHTML = ''; empty.style.display = 'none'; meta.textContent = ''; activeIndex = -1; return; }
+      var hits = searchData.filter(function(item){
+        return item.title.toLowerCase().indexOf(kw) > -1 || item.content.toLowerCase().indexOf(kw) > -1;
+      });
+      render(hits, kw);
+    }
+
     function openSearch(){
       mask.classList.add('active');
       dialog.classList.add('active');
-      document.body.style.overflow='hidden';
-      if(!searchData){
-        fetch('/search.xml').then(function(r){return r.text()}).then(function(xml){
-          var parser=new DOMParser();
-          var doc=parser.parseFromString(xml,'text/xml');
-          var entries=doc.querySelectorAll('entry');
-          searchData=[];
-          entries.forEach(function(e){
-            searchData.push({
-              title:e.querySelector('title').textContent,
-              url:e.querySelector('url').textContent,
-              content:(e.querySelector('content').textContent||'').replace(/<[^>]+>/g,'').substring(0,300)
-            })
-          })
-        }).catch(function(){searchData=[]})
-      }
-      setTimeout(function(){input.focus()},100)
+      document.body.style.overflow = 'hidden';
+      loadData().then(function(){ setTimeout(function(){ input.focus(); }, 120); });
     }
     function closeSearch(){
       mask.classList.remove('active');
       dialog.classList.remove('active');
-      document.body.style.overflow='';
-      input.value='';
-      results.innerHTML='';
-      empty.style.display='none'
+      document.body.style.overflow = '';
+      clearTimeout(debounceTimer);
+      input.value = '';
+      results.innerHTML = '';
+      empty.style.display = 'none';
+      meta.textContent = '';
+      activeIndex = -1;
     }
-    function esc(s){
-      // 标题/内容含 < & 等字符时避免破坏 HTML 结构（XSS 防护）
-      return String(s).replace(/[&<>"']/g,function(c){
-        return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]
-      })
+
+    function setActive(i){
+      var items = results.querySelectorAll('.search-result-item');
+      if (!items.length) return;
+      if (i < 0) i = items.length - 1;
+      if (i > items.length - 1) i = 0;
+      activeIndex = i;
+      items.forEach(function(el, idx){ el.classList.toggle('active', idx === i); });
+      var el = items[i];
+      if (el && el.scrollIntoView) el.scrollIntoView({block: 'nearest'});
     }
-    function doSearch(q){
-      if(!searchData||!q.trim()){results.innerHTML='';empty.style.display='none';return}
-      var kw=q.trim().toLowerCase();
-      var hits=searchData.filter(function(item){
-        return item.title.toLowerCase().indexOf(kw)>-1||item.content.toLowerCase().indexOf(kw)>-1
-      });
-      if(hits.length===0){results.innerHTML='';empty.style.display='block';return}
-      empty.style.display='none';
-      results.innerHTML=hits.map(function(item){
-        return '<a class=\"search-result-item\" href=\"'+esc(item.url)+'\"><strong>'+esc(item.title)+'</strong><p>'+esc(item.content.substring(0,120))+'...</p></a>'
-      }).join('')
-    }
-    document.querySelector('.nav-search-btn').addEventListener('click',function(e){e.preventDefault();openSearch()});
-    mask.addEventListener('click',closeSearch);
-    closeBtn.addEventListener('click',closeSearch);
-    input.addEventListener('input',function(){doSearch(this.value)});
-    document.addEventListener('keydown',function(e){if(e.key==='Escape')closeSearch()})
-  })()
+
+    document.querySelectorAll('.nav-search-btn').forEach(function(btn){
+      btn.addEventListener('click', function(e){ e.preventDefault(); openSearch(); });
+    });
+
+    mask.addEventListener('click', closeSearch);
+    closeBtn.addEventListener('click', closeSearch);
+    input.addEventListener('input', function(){
+      clearTimeout(debounceTimer);
+      var v = this.value;
+      debounceTimer = setTimeout(function(){ doSearch(v); }, 120);
+    });
+    input.addEventListener('keydown', function(e){
+      if (e.key === 'ArrowDown'){ e.preventDefault(); setActive(activeIndex + 1); }
+      else if (e.key === 'ArrowUp'){ e.preventDefault(); setActive(activeIndex - 1); }
+      else if (e.key === 'Enter'){
+        var items = results.querySelectorAll('.search-result-item');
+        var target = activeIndex >= 0 ? items[activeIndex] : items[0];
+        if (target && target.href){ window.location.href = target.href; }
+      }
+    });
+    document.addEventListener('keydown', function(e){
+      if (e.key === 'Escape') closeSearch();
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')){
+        e.preventDefault();
+        if (dialog.classList.contains('active')) closeSearch(); else openSearch();
+      }
+    });
+  })();
 </script>
+
 <script>
+  // ===== 代码复制按钮 =====
   (function(){
     document.querySelectorAll('.article-entry pre').forEach(function(pre){
       var btn=document.createElement('button');
       btn.className='code-copy-btn';
-      btn.innerHTML='<i class="fas fa-copy"></i> 复制';
+      btn.type='button';
+      btn.innerHTML='<i class="fas fa-copy" aria-hidden="true"></i> 复制';
       btn.addEventListener('click',function(){
         var code=pre.querySelector('code')||pre;
         navigator.clipboard.writeText(code.textContent).then(function(){
-          btn.innerHTML='<i class="fas fa-check"></i> 已复制';btn.style.background='rgba(34,197,94,.2)';
-          setTimeout(function(){btn.innerHTML='<i class="fas fa-copy"></i> 复制';btn.style.background=''},2000)
+          btn.innerHTML='<i class="fas fa-check" aria-hidden="true"></i> 已复制';btn.style.background='rgba(34,197,94,.25)';
+          setTimeout(function(){btn.innerHTML='<i class="fas fa-copy" aria-hidden="true"></i> 复制';btn.style.background=''},2000)
         }).catch(function(){
-          btn.innerHTML='<i class="fas fa-times"></i> 失败';
-          setTimeout(function(){btn.innerHTML='<i class="fas fa-copy"></i> 复制'},2000)
+          btn.innerHTML='<i class="fas fa-times" aria-hidden="true"></i> 失败';
+          setTimeout(function(){btn.innerHTML='<i class="fas fa-copy" aria-hidden="true"></i> 复制'},2000)
         })
       });
       pre.appendChild(btn)
@@ -150,6 +264,20 @@
   })()
 </script>
 
+<script>
+  // ===== 回到顶部 =====
+  (function(){
+    var btn = document.getElementById('go-up');
+    if (!btn) return;
+    function update(){
+      var t = document.documentElement.scrollTop || document.body.scrollTop;
+      btn.classList.toggle('shown', t > 400);
+    }
+    window.addEventListener('scroll', update, {passive: true});
+    btn.addEventListener('click', function(){ window.scrollTo({top: 0, behavior: 'smooth'}); });
+    update();
+  })();
+</script>
 
 <script id="starfield-script">
 (function(){
@@ -210,6 +338,7 @@
   }).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
   function rgba(b,a){return 'rgba('+b[0]+','+b[1]+','+b[2]+','+a+')'}
   var last=(typeof performance!=='undefined'?performance.now():Date.now());
+  var rafId=null;
   function draw(now){
     now=now||(typeof performance!=='undefined'?performance.now():Date.now());
     var dt=now-last;last=now;
@@ -269,7 +398,7 @@
       ctx.beginPath(); ctx.arc(mouse.x, mouse.y, 40, 0, Math.PI*2); ctx.fill();
     }
     ctx.lineWidth=1;
-    requestAnimationFrame(draw);
+    rafId=requestAnimationFrame(draw);
   }
   // 减少动态效果偏好：静态星空，不启动动画循环
   if(reduce){
@@ -283,8 +412,16 @@
       }
     })();
   } else {
-    draw(typeof performance!=="undefined"?performance.now():Date.now());
+    rafId=requestAnimationFrame(draw);
   }
+  // 标签页隐藏时暂停动画，节省 CPU
+  document.addEventListener('visibilitychange',function(){
+    if(document.hidden){
+      if(rafId!==null){cancelAnimationFrame(rafId);rafId=null;}
+    } else {
+      if(rafId===null && !reduce){last=(typeof performance!=='undefined'?performance.now():Date.now());rafId=requestAnimationFrame(draw);}
+    }
+  });
 })();
 </script>
 <%- js('js/jquery-3.6.4.min.js') %>
