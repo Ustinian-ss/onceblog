@@ -8,10 +8,6 @@
   var runDays = firstDate ? Math.max(1, Math.floor((Date.now() - firstDate.valueOf()) / 86400000)) : 0;
   var lastPost = postsArray.length ? postsArray[0] : null;
   %>
-  <section class="disk-stage" id="disk-stage" aria-hidden="true">
-    <img class="disk-stage__img" src="<%- url_for('/images/disk-photo.jpg') %>" alt="" width="1620" height="849" loading="lazy">
-  </section>
-
   <section class="home-shell">
     <div class="home-main">
       <div class="home-intro card-panel">

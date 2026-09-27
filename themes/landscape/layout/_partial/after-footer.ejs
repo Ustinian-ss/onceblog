@@ -279,6 +279,68 @@
   })();
 </script>
 
+<script>
+  // ===== 首屏 → 内容 的滚动过渡动效 =====
+  (function(){
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) return;
+
+    var hero = document.querySelector('.site-hero');
+    if (!hero) return;
+    var bg = hero.querySelector('.site-hero__overlay');
+    var content = hero.querySelector('.site-hero__content');
+
+    var heroH = 0, ticking = false;
+    function measure(){ heroH = hero.offsetHeight || window.innerHeight; }
+    measure();
+    window.addEventListener('resize', measure, {passive: true});
+
+    // 内容区：露出时淡入上移
+    // 初始隐藏态由 JS 设置 —— 脚本不执行 / 报错时，正文照常可见
+    var shell = document.querySelector('.home-shell');
+    var shellShown = false;
+    function showShell(){
+      if (shellShown || !shell) return;
+      shellShown = true;
+      shell.style.opacity = '1';
+      shell.style.transform = 'translate3d(0,0,0)';
+    }
+    if (shell){
+      shell.style.transition = 'opacity .8s cubic-bezier(.22,.61,.36,1), transform .8s cubic-bezier(.22,.61,.36,1)';
+      shell.style.opacity = '0';
+      shell.style.transform = 'translate3d(0,52px,0)';
+    }
+
+    function update(){
+      ticking = false;
+      var y = document.documentElement.scrollTop || document.body.scrollTop || 0;
+
+      // 首屏：文案上移快于页面滚动（纵深）+ 淡出
+      // 背景只做轻微放大、不做位移 —— 位移会让 hero 顶边露出底色
+      if (heroH && y <= heroH){
+        var p = y / heroH;
+        if (bg) bg.style.transform = 'scale(' + (1 + p * 0.06).toFixed(4) + ')';
+        if (content){
+          content.style.opacity = Math.max(0, 1 - p / 0.62).toFixed(3);
+          content.style.transform = 'translate3d(0,' + (-y * 0.3).toFixed(1) + 'px,0)';
+        }
+      }
+
+      // 内容区露出约 8% 时开始淡入
+      if (!shellShown && shell){
+        if (shell.getBoundingClientRect().top < window.innerHeight * 0.92) showShell();
+      }
+    }
+
+    window.addEventListener('scroll', function(){
+      if (!ticking){ ticking = true; requestAnimationFrame(update); }
+    }, {passive: true});
+    update();
+    // 兜底：无论如何 3.5 秒后显示正文，避免异常导致内容不可见
+    setTimeout(showShell, 3500);
+  })();
+</script>
+
 <script id="starfield-script">
 (function(){
   var canvas = document.getElementById('starfield');

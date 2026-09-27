@@ -176,40 +176,24 @@ body
     box-shadow: 0 0 24px rgba(129,140,248,.95)
 
 // ============================================================
-// 首屏之下的黑洞吸积盘过渡带（首页专属）
-// 图片上下边缘已在生成时混合到 #020617，这里再做一层渐变收口，
-// 保证与首屏地球、下方正文之间的过渡完全无缝
+// 首屏 → 内容 的滚动过渡
+// 视差与淡出由 JS 驱动（见 after-footer），这里只做渲染提示与降级兜底
 // ============================================================
-.disk-stage
-  position: relative
-  width: 100vw
-  margin-left: calc(50% - 50vw)
-  margin-right: calc(50% - 50vw)
-  margin-top: 0
-  margin-bottom: 0
-  overflow: hidden
-  background: #020617
-  display: flex
-  justify-content: center
-  line-height: 0
-  &::after
-    content: ''
-    position: absolute
-    inset: 0
-    z-index: 2
-    pointer-events: none
-    background: linear-gradient(180deg, #020617 0%, rgba(2,6,23,0) 9%, rgba(2,6,23,0) 91%, #020617 100%)
+.site-hero__overlay
+  will-change: transform
+  backface-visibility: hidden
 
-.disk-stage__img
-  display: block
-  width: 100%
-  max-width: 1620px
-  height: auto
+.site-hero__content
+  will-change: transform, opacity
+  backface-visibility: hidden
 
-@media (max-width: 900px)
-  .disk-stage
-    &::after
-      background: linear-gradient(180deg, #020617 0%, rgba(2,6,23,0) 12%, rgba(2,6,23,0) 88%, #020617 100%)
+// 降低动态效果偏好：完全取消动效
+@media (prefers-reduced-motion: reduce)
+  .site-hero__overlay,
+  .site-hero__content
+    transform: none !important
+    opacity: 1 !important
+    will-change: auto
 
 .site-nav
   display: flex
