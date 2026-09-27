@@ -176,43 +176,40 @@ body
     box-shadow: 0 0 24px rgba(129,140,248,.95)
 
 // ============================================================
-// 首屏之下的吸积盘过渡带（首页专属，纯装饰）
+// 首屏之下的黑洞吸积盘过渡带（首页专属）
+// 图片上下边缘已在生成时混合到 #020617，这里再做一层渐变收口，
+// 保证与首屏地球、下方正文之间的过渡完全无缝
 // ============================================================
 .disk-stage
   position: relative
   width: 100vw
   margin-left: calc(50% - 50vw)
   margin-right: calc(50% - 50vw)
-  margin-bottom: 54px
-  height: 520px
+  margin-top: 0
+  margin-bottom: 0
   overflow: hidden
   background: #020617
   display: flex
-  align-items: center
   justify-content: center
-  // 与首屏 / 正文两侧平滑衔接
+  line-height: 0
   &::after
     content: ''
     position: absolute
     inset: 0
     z-index: 2
     pointer-events: none
-    background: linear-gradient(180deg, rgba(2,6,23,.98) 0%, rgba(2,6,23,0) 30%, rgba(2,6,23,0) 70%, rgba(2,6,23,.98) 100%)
+    background: linear-gradient(180deg, #020617 0%, rgba(2,6,23,0) 9%, rgba(2,6,23,0) 91%, #020617 100%)
 
 .disk-stage__img
   display: block
   width: 100%
-  max-width: 1320px
+  max-width: 1620px
   height: auto
-  opacity: .88
-  filter: blur(2.5px)
 
 @media (max-width: 900px)
   .disk-stage
-    height: 300px
-    margin-bottom: 34px
-  .disk-stage__img
-    filter: blur(2px)
+    &::after
+      background: linear-gradient(180deg, #020617 0%, rgba(2,6,23,0) 12%, rgba(2,6,23,0) 88%, #020617 100%)
 
 .site-nav
   display: flex
