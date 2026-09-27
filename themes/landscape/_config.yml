@@ -13,6 +13,10 @@ rss: /atom.xml
 banner: "images/banner.jpg"
 # Subtitle of page top
 subtitle: Notes & Writeups
+# Hero 首屏文案（首页与各页页头共用）
+hero:
+  title: 向远方看，往深处做。
+  subtitle: Look far · Build deep
 # Header links with icon, specified links will appear at the top right corner of the page
 # Each name must correspond to the icon name of Fork Awesome
 # https://forkaweso.me/Fork-Awesome/icons/
