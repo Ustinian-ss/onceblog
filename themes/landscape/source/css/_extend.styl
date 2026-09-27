@@ -531,7 +531,12 @@ body
   margin: 0
   padding: 0
   display: grid
+  // 网格轨道默认按 min-content 取宽：「最新文章」标题是 white-space: nowrap，
+  // 长标题会把整列撑出卡片右边界。minmax(0, 1fr) 允许轨道收缩，交由标题自己省略号截断
+  grid-template-columns: minmax(0, 1fr)
   gap: 8px
+  li
+    min-width: 0
 
 .compact-list a
   display: block
